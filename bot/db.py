@@ -4,6 +4,7 @@ import asyncpg
 from dotenv import load_dotenv
 from exceptions import DoubleStore, ProblemConnectToDb
 from utils import Store
+from settings_logs import logger
 
 load_dotenv()
 
@@ -19,6 +20,7 @@ async def connect_to_db():
             port="5432"
         )
     except Exception as e:
+        logger.error(f"Возникла ошибка при подключении к БД: {e}")
         raise ProblemConnectToDb(error=str(e))
     return conn
 
@@ -39,5 +41,7 @@ async def create_to_db(message: list, chat_id: int):
                 "INSERT INTO stores (sap_id, date_open, chat_id) VALUES ($1, $2, $3);",
                 store.sap_id, store.date, store.chat_id
             )
+    except Exception as e:
+        logger.error(f"Возникла ошибка при записи в БД: {e}")
     finally:
         await conn.close()
