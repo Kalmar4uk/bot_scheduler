@@ -2,7 +2,7 @@ import os
 
 import asyncpg
 from dotenv import load_dotenv
-from exceptions import ProblemConnectToDb, DoubleStore
+from exceptions import DoubleStore, ProblemConnectToDb
 from utils import Store
 
 load_dotenv()

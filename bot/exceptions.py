@@ -49,3 +49,13 @@ class DoubleStore(Exception):
     def __init__(self, error="Магазин с такой датой открытия уже добавлен"):
         self.error = error
         super().__init__(self.error)
+
+
+class ErrorSendMessage(Exception):
+    """Исключение ошибки отправления сообщения планировщика"""
+    pass
+
+
+class ErrorStartSchedule(Exception):
+    """Исключение ошибки старта планировщика"""
+    pass

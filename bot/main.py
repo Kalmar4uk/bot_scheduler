@@ -7,8 +7,10 @@ from apscheduler.triggers.cron import CronTrigger
 from constants import (ERROR_SAVE_TO_DB, ERROR_SAVE_TO_IN_PRIVATE, TEMPLATE,
                        TOKEN)
 from db import connect_to_db, create_to_db
-from exceptions import (IncorrectChat, IncorrectDateOpenStore,
-                        IncorrectSapStore, NotMessage, ProblemToSaveInDB)
+from exceptions import (ErrorSendMessage, ErrorStartSchedule, IncorrectChat,
+                        IncorrectDateOpenStore, IncorrectSapStore, NotMessage,
+                        ProblemToSaveInDB)
+from settings_logs import logger
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 from utils import check_message
@@ -20,17 +22,26 @@ app = ApplicationBuilder().token(TOKEN).build()
 
 async def send_message(text: str, chat_id: int):
     """Отправка сообщения планировщика в чат"""
-    await app.bot.send_message(chat_id=chat_id, text=text)
+    try:
+        await app.bot.send_message(chat_id=chat_id, text=text)
+        logger.info("Отправили сообщение")
+    except Exception as e:
+        logger.error(
+            f"Возникла ошибка при отправке сообщения планировщика: {e}"
+        )
+        raise ErrorSendMessage(e)
 
 
 async def search_suitable_stores():
     """Функция планировщика, поиск в БД подходящих объектов"""
     conn = await connect_to_db()
+    logger.info("Подключились к БД")
     date: datetime = datetime.now().date() + timedelta(days=5)
     values = await conn.fetch(
         "SELECT * FROM stores WHERE date_open = $1",
         date
     )
+    logger.info("Получили данные из БД")
     text: str = ""
     if values:
         chat_id: int = values[0]["chat_id"]
@@ -38,6 +49,7 @@ async def search_suitable_stores():
             sap_id: str = store["sap_id"]
             date: datetime = store["date_open"]
             text += f"Магазин {sap_id} открывается {date} пора его включить\n"
+        logger.info("Подготовили сообщение для отправки")
         await send_message(text=text, chat_id=chat_id)
     await conn.close()
 
@@ -59,6 +71,7 @@ async def new_store(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.send_message(
             chat_id=chat.id, text=f"error: {str(e)}"
         )
+        logger.error("Возникла ошибка при преобразовании сообщения из чата")
     try:
         await check_message(message=message)
     except NotMessage as e:
@@ -75,7 +88,9 @@ async def new_store(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
     else:
         try:
+            logger.info("Отправили данные для сохранения в БД")
             await create_to_db(message=message, chat_id=chat.id)
+            logger.info("Данные сохранены")
             await context.bot.send_message(chat_id=chat.id, text="Записал")
         except Exception as e:
             await context.bot.send_message(
@@ -87,7 +102,13 @@ async def new_store(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def example_template(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat = update.effective_chat
-    await context.bot.send_message(chat_id=chat.id, text=TEMPLATE)
+    try:
+        await context.bot.send_message(chat_id=chat.id, text=TEMPLATE)
+    except Exception as e:
+        logger.error(
+            f"Возникла ошибка при отправке сообщения: {e}"
+        )
+        raise ErrorSendMessage(e)
 
 
 async def hello(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -101,19 +122,31 @@ async def hello(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"телеграмме. По этому скорее всего просто дам доступ к БД."
         f"Добавление из личных сообщений невозможно!"
     )
-    await context.bot.send_message(chat_id=chat.id, text=output)
+    try:
+        await context.bot.send_message(chat_id=chat.id, text=output)
+    except Exception as e:
+        logger.error(
+            f"Возникла ошибка при отправке сообщения: {e}"
+        )
+        raise ErrorSendMessage(e)
 
 
 async def setup_scheduler():
     """Инициализация обработчика"""
-    scheduler = AsyncIOScheduler()
-    scheduler.add_job(
-        search_suitable_stores,
-        CronTrigger(hour=10),
-        id="daily_check",
-        timezone="Europe/Moscow"
-    )
-    scheduler.start()
+    try:
+        scheduler = AsyncIOScheduler()
+        scheduler.add_job(
+            search_suitable_stores,
+            CronTrigger(hour=10),
+            id="daily_check",
+            timezone="Europe/Moscow"
+        )
+        scheduler.start()
+        logger.info("Запустили планировщик")
+    except Exception as e:
+        raise ErrorStartSchedule(
+            f"Возникла ошибка при запуске планировщика: {e}"
+        )
     return scheduler
 
 
