@@ -11,3 +11,12 @@ TEMPLATE: str = (
 )
 ERROR_SAVE_TO_IN_PRIVATE: str = "Сохранение возможно только в групповом чате"
 ERROR_SAVE_TO_DB: str = "Возникла ошибка при сохранении в БД"
+
+
+STATUSES_FOR_REMINDERS = {
+    "cr": "created",
+    "rp": "repeat",
+    "cn": "confirm",
+    "ex": "expired"
+
+}

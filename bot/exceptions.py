@@ -38,7 +38,7 @@ class ProblemToSaveInDB(Exception):
         super().__init__(self.error)
 
 
-class ProblemToJobWithDb(Exception):
+class ProblemToGetDataWithDB(Exception):
     """Ошибка при получении/обновлении данных в БД"""
     pass
 
@@ -66,4 +66,9 @@ class ErrorSendMessage(Exception):
 
 class ErrorStartSchedule(Exception):
     """Исключение ошибки старта планировщика"""
+    pass
+
+
+class InvalidMessageId(Exception):
+    """Исключение отсутствия или несоответствия message_id"""
     pass

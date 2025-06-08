@@ -8,9 +8,9 @@ from apscheduler.triggers.cron import CronTrigger
 from constants import TOKEN
 from exceptions import ErrorStartSchedule
 from settings_logs import logger
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
 from scheduler_handlers import search_suitable_stores
-from bot_handlers import hello, new_store, example_template
+from bot_handlers import hello, new_store, example_template, waiting_for_response
 
 load_dotenv()
 nest_asyncio.apply()
@@ -20,14 +20,14 @@ app = ApplicationBuilder().token(TOKEN).build()
 sentry_sdk.init(os.getenv("DSN"))
 
 
-async def setup_scheduler():
+async def setup_scheduler() -> AsyncIOScheduler:
     """Инициализация обработчика"""
     global app
     try:
         scheduler = AsyncIOScheduler()
         scheduler.add_job(
             search_suitable_stores,
-            CronTrigger(hour=10),
+            CronTrigger(hour=17, minute=49),
             id="daily_check",
             timezone="Europe/Moscow",
             kwargs={"app": app}
@@ -42,13 +42,14 @@ async def setup_scheduler():
     return scheduler
 
 
-async def main():
+async def main() -> None:
     """Главная функция запусков"""
     scheduler = await setup_scheduler()
 
     app.add_handler(CommandHandler("start", hello))
     app.add_handler(CommandHandler("template", example_template))
     app.add_handler(CommandHandler("new_store", new_store))
+    app.add_handler(MessageHandler(filters.TEXT, waiting_for_response))
 
     try:
         await app.run_polling()

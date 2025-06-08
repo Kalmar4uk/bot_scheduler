@@ -11,15 +11,17 @@ class Store:
             sap_id: int,
             date: datetime,
             description: str,
+            id: int | None = None,
             chat_id: int | None = None
     ):
+        self.id = id
         self.sap_id = sap_id
         self.date = date
         self.chat_id = chat_id
         self.description = description
 
     @classmethod
-    def preparation_for_db(cls, message: list, chat_id: int = None):
+    def convertation_from_message(cls, message: list, chat_id: int = None):
         """Метод класса для сохранения и преобразования даты в объект даты"""
         return cls(
             sap_id=message[0],
@@ -28,9 +30,19 @@ class Store:
             chat_id=chat_id
         )
 
+    @classmethod
+    def convertation_from_db(cls, data: dict):
+        return cls(
+            id=data.get("id"),
+            sap_id=data.get("sap_id"),
+            date=data.get("date_event"),
+            description=data.get("description"),
+            chat_id=data.get("chat_id")
+        )
 
-async def check_message(message: list):
-    """Проверка полученно сообщения"""
+
+async def check_message(message: list) -> None:
+    """Проверка полученного сообщения"""
     if len(message) < 2:
         raise NotMessage()
     elif len(message[0]) < 4:

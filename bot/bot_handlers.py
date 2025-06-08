@@ -14,10 +14,14 @@ async def waiting_for_response(
         context: ContextTypes.DEFAULT_TYPE
 ):
     """Получение ответа на уведомление"""
-    pass
+    try:
+        msg: int = update.message.reply_to_message.message_id
+    except AttributeError:
+        pass
 
 
-async def new_store(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+async def new_store(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Получение/проверка/запись сообщения"""
     chat = update.effective_chat
     if chat.type == "private":
@@ -63,7 +67,7 @@ async def new_store(update: Update, context: ContextTypes.DEFAULT_TYPE):
             raise ProblemToSaveInDB(error=e)
 
 
-async def example_template(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def example_template(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat = update.effective_chat
     try:
         await context.bot.send_message(chat_id=chat.id, text=TEMPLATE)
@@ -74,17 +78,13 @@ async def example_template(update: Update, context: ContextTypes.DEFAULT_TYPE):
         raise ErrorSendMessage(e)
 
 
-async def hello(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def hello(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Приветствие бота"""
     chat = update.effective_chat
-
     output = (
         f"Привет {update.message.from_user.username}.\n"
         f"Для добавления магазина используй команду /new_store "
         f"написанную по шаблону, для просмотра шаблона используй /template.\n"
-        f"В дальнейшем добавлю выгрузку в excel, но есть проблема с передачей файлов "
-        f"телеграмме. По этому скорее всего просто дам доступ к БД."
-        f"Добавление из личных сообщений невозможно!"
     )
     try:
         await context.bot.send_message(chat_id=chat.id, text=output)
