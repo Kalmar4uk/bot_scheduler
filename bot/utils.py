@@ -7,13 +7,16 @@ class Store:
     """Класс для магазина"""
 
     def __init__(
-            self, sap_id: int,
+            self,
+            sap_id: int,
             date: datetime,
+            description: str,
             chat_id: int | None = None
     ):
         self.sap_id = sap_id
         self.date = date
         self.chat_id = chat_id
+        self.description = description
 
     @classmethod
     def preparation_for_db(cls, message: list, chat_id: int = None):
@@ -21,6 +24,7 @@ class Store:
         return cls(
             sap_id=message[0],
             date=datetime.strptime(message[1], "%d.%m.%Y").date(),
+            description=message[2],
             chat_id=chat_id
         )
 

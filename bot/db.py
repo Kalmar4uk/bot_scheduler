@@ -3,7 +3,7 @@ import os
 import asyncpg
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
-from exceptions import DoubleStore, ProblemConnectToDb, ProblemToJobWithDb
+from exceptions import DoubleStore, ProblemConnectToDb, ProblemToJobWithDb, ProblemToSaveInDB
 from utils import Store
 from settings_logs import logger
 
@@ -34,17 +34,18 @@ async def create_to_db(message: list, chat_id: int):
     try:
         async with conn.transaction():
             double_data = await conn.fetch(
-                "SELECT sap_id, date_open FROM stores WHERE sap_id = $1 and date_open = $2",
+                "SELECT sap_id, date_event FROM stores WHERE sap_id = $1 and date_event = $2",
                 store.sap_id, store.date
             )
             if double_data:
                 raise DoubleStore()
             await conn.execute(
-                "INSERT INTO stores (sap_id, date_open, chat_id) VALUES ($1, $2, $3);",
-                store.sap_id, store.date, store.chat_id
+                "INSERT INTO stores (sap_id, date_event, chat_id) VALUES ($1, $2, $3, $4);",
+                store.sap_id, store.date, store.chat_id, store.description
             )
     except Exception as e:
         logger.error(f"Возникла ошибка при записи в БД: {e}")
+        raise ProblemToSaveInDB(error=e)
     finally:
         await conn.close()
 
@@ -56,7 +57,7 @@ async def get_stores():
     try:
         async with conn.transaction():
             values = await conn.fetch(
-                "SELECT * FROM stores WHERE date_open = $1",
+                "SELECT * FROM stores WHERE date_event = $1",
                 date
             )
         logger.info("Получили данные из БД")
@@ -67,22 +68,3 @@ async def get_stores():
         await conn.close()
 
     return values
-
-
-async def update_stores(id: int):
-    """Обновление стобца message_sent"""
-    conn = await connect_to_db()
-    try:
-        async with conn.transaction():
-            updates = await conn.execute(
-                "UPDATE stores SET message_sent = true WHERE id = $1",
-                id
-            )
-            logger.info(f"Обновили запись с id {id}")
-    except Exception as e:
-        logger.error(f"Возникла проблема при обновлении магазина: {e}")
-        raise ProblemToJobWithDb(str(e))
-    finally:
-        await conn.close()
-
-    return updates

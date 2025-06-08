@@ -51,7 +51,10 @@ class IncorrectChat(Exception):
 class DoubleStore(Exception):
     """Исключение повторно добавления магазина"""
 
-    def __init__(self, error="Магазин с такой датой открытия уже добавлен"):
+    def __init__(
+            self,
+            error="Данный магазин с такой датой события уже добавлен"
+    ):
         self.error = error
         super().__init__(self.error)
 
