@@ -38,6 +38,11 @@ class ProblemToSaveInDB(Exception):
         super().__init__(self.error)
 
 
+class ProblemToJobWithDb(Exception):
+    """Ошибка при получении/обновлении данных в БД"""
+    pass
+
+
 class IncorrectChat(Exception):
     """Исключение попытки сохранения в личных сообщениях"""
     pass

@@ -2,7 +2,8 @@ import os
 
 import asyncpg
 from dotenv import load_dotenv
-from exceptions import DoubleStore, ProblemConnectToDb
+from datetime import datetime, timedelta
+from exceptions import DoubleStore, ProblemConnectToDb, ProblemToJobWithDb
 from utils import Store
 from settings_logs import logger
 
@@ -19,6 +20,7 @@ async def connect_to_db():
             host="localhost",
             port="5432"
         )
+        logger.info("Подключились к БД")
     except Exception as e:
         logger.error(f"Возникла ошибка при подключении к БД: {e}")
         raise ProblemConnectToDb(error=str(e))
@@ -45,3 +47,42 @@ async def create_to_db(message: list, chat_id: int):
         logger.error(f"Возникла ошибка при записи в БД: {e}")
     finally:
         await conn.close()
+
+
+async def get_stores():
+    """Получение магазинов из БД"""
+    conn = await connect_to_db()
+    date: datetime = datetime.now().date() + timedelta(days=5)
+    try:
+        async with conn.transaction():
+            values = await conn.fetch(
+                "SELECT * FROM stores WHERE date_open = $1",
+                date
+            )
+        logger.info("Получили данные из БД")
+    except Exception as e:
+        logger.error(f"Возникла ошибка при получении магазинов из БД: {e}")
+        raise ProblemToJobWithDb(str(e))
+    finally:
+        await conn.close()
+
+    return values
+
+
+async def update_stores(id: int):
+    """Обновление стобца message_sent"""
+    conn = await connect_to_db()
+    try:
+        async with conn.transaction():
+            updates = await conn.execute(
+                "UPDATE stores SET message_sent = true WHERE id = $1",
+                id
+            )
+            logger.info(f"Обновили запись с id {id}")
+    except Exception as e:
+        logger.error(f"Возникла проблема при обновлении магазина: {e}")
+        raise ProblemToJobWithDb(str(e))
+    finally:
+        await conn.close()
+
+    return updates

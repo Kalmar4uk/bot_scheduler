@@ -6,13 +6,13 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from constants import (ERROR_SAVE_TO_DB, ERROR_SAVE_TO_IN_PRIVATE, TEMPLATE,
                        TOKEN)
-from db import connect_to_db, create_to_db
+from db import connect_to_db, create_to_db, update_stores, get_stores
 from exceptions import (ErrorSendMessage, ErrorStartSchedule, IncorrectChat,
                         IncorrectDateOpenStore, IncorrectSapStore, NotMessage,
                         ProblemToSaveInDB)
 from settings_logs import logger
 from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler
 from utils import check_message
 
 nest_asyncio.apply()
@@ -37,21 +37,29 @@ async def search_suitable_stores():
     conn = await connect_to_db()
     logger.info("Подключились к БД")
     date: datetime = datetime.now().date() + timedelta(days=5)
-    values = await conn.fetch(
-        "SELECT * FROM stores WHERE date_open = $1",
-        date
-    )
-    logger.info("Получили данные из БД")
+    values = await get_stores()
     text: str = ""
     if values:
         chat_id: int = values[0]["chat_id"]
         for store in values:
-            sap_id: str = store["sap_id"]
-            date: datetime = store["date_open"]
-            text += f"Магазин {sap_id} открывается {date} пора его включить\n"
+            sap_id: str = store.get("sap_id")
+            date: datetime = store.get("date_open")
+            description: str = store.get("description")
+            text += (
+                f"Магазин {sap_id} открывается {date}, "
+                f"описание: {description}\n"
+            )
         logger.info("Подготовили сообщение для отправки")
         await send_message(text=text, chat_id=chat_id)
     await conn.close()
+
+
+async def waiting_for_response(
+        update: Update,
+        context: ContextTypes.DEFAULT_TYPE
+):
+    """Получение ответа на уведомление"""
+    pass
 
 
 async def new_store(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -114,6 +122,7 @@ async def example_template(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def hello(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Приветствие бота"""
     chat = update.effective_chat
+
     output = (
         f"Привет {update.message.from_user.username}.\n"
         f"Для добавления магазина используй команду /new_store "
