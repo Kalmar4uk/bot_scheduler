@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from exceptions import IncorrectDateOpenStore, IncorrectSapStore, NotMessage
+from bot.exceptions import IncorrectDateOpenStore, IncorrectSapStore, NotMessage
 
 
 class Store:

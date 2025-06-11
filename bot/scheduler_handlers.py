@@ -1,10 +1,13 @@
 from datetime import datetime, timedelta
-from db import connect_to_db, get_stores, added_store_in_reminders_table
-from exceptions import ErrorSendMessage, ProblemToGetDataWithDB, InvalidMessageId
-from settings_logs import logger
+
 from telegram import Message
 from telegram.ext import ApplicationBuilder
-from utils import Store
+
+from database.db import added_store_in_reminders_table, connect_to_db, get_stores
+from bot.exceptions import (ErrorSendMessage, InvalidMessageId,
+                            ProblemToGetUpdateDataWithDB)
+from bot.settings_logs import logger
+from bot.utils import Store
 
 
 async def send_message(
@@ -27,7 +30,7 @@ async def search_suitable_stores(app: ApplicationBuilder) -> None:
     conn = await connect_to_db()
     try:
         values = await get_stores()
-    except ProblemToGetDataWithDB:
+    except ProblemToGetUpdateDataWithDB:
         await conn.close()
     text: str = ""
     stores_for_reminders: list[Store] = []

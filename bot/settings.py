@@ -1,16 +1,20 @@
 import asyncio
 import os
+
 import nest_asyncio
 import sentry_sdk
-from dotenv import load_dotenv
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
-from constants import TOKEN
-from exceptions import ErrorStartSchedule
-from settings_logs import logger
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
-from scheduler_handlers import search_suitable_stores
-from bot_handlers import hello, new_store, example_template, waiting_for_response
+from dotenv import load_dotenv
+from telegram.ext import (ApplicationBuilder, CommandHandler, MessageHandler,
+                          filters)
+
+from bot.bot_handlers import (example_template, hello, new_store,
+                              waiting_for_response)
+from bot.constants import TOKEN
+from bot.exceptions import ErrorStartSchedule
+from bot.scheduler_handlers import search_suitable_stores
+from bot.settings_logs import logger
 
 load_dotenv()
 nest_asyncio.apply()
@@ -42,7 +46,7 @@ async def setup_scheduler() -> AsyncIOScheduler:
     return scheduler
 
 
-async def main() -> None:
+async def setup() -> None:
     """Главная функция запусков"""
     scheduler = await setup_scheduler()
 
@@ -59,7 +63,3 @@ async def main() -> None:
     finally:
         await app.shutdown()
         scheduler.shutdown()
-
-
-if __name__ == "__main__":
-    asyncio.run(main())

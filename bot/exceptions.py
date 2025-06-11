@@ -38,7 +38,7 @@ class ProblemToSaveInDB(Exception):
         super().__init__(self.error)
 
 
-class ProblemToGetDataWithDB(Exception):
+class ProblemToGetUpdateDataWithDB(Exception):
     """Ошибка при получении/обновлении данных в БД"""
     pass
 
@@ -72,3 +72,22 @@ class ErrorStartSchedule(Exception):
 class InvalidMessageId(Exception):
     """Исключение отсутствия или несоответствия message_id"""
     pass
+
+
+class NotReplyId(Exception):
+    """Исключение при отсутсвии у сообщения reply_id"""
+    def __init__(self, error="Сообщение не является ответом на напоминание"):
+        self.error = error
+        super().__init__(self.error)
+
+
+class ReplyIsEmpty(Exception):
+    """Исключение при отсутствии полученного message_id в базе"""
+    def __init__(
+            self,
+            error="message_id отсутствует в базе",
+            message_id: int = None
+    ):
+        self.error = error
+        self.message_id = message_id
+        super().__init__(self.error, message_id)

@@ -1,12 +1,14 @@
-from constants import ERROR_SAVE_TO_DB, ERROR_SAVE_TO_IN_PRIVATE, TEMPLATE
-from db import create_to_db
-from exceptions import (ErrorSendMessage, IncorrectChat,
-                        IncorrectDateOpenStore, IncorrectSapStore, NotMessage,
-                        ProblemToSaveInDB)
-from settings_logs import logger
 from telegram import Update
 from telegram.ext import ContextTypes
-from utils import check_message
+
+from bot.constants import ERROR_SAVE_TO_DB, ERROR_SAVE_TO_IN_PRIVATE, TEMPLATE
+from database.db import create_to_db, update_store_received_confirmation
+from bot.exceptions import (ErrorSendMessage, IncorrectChat,
+                        IncorrectDateOpenStore, IncorrectSapStore, NotMessage,
+                        ProblemToSaveInDB, ProblemToGetUpdateDataWithDB,
+                        NotReplyId)
+from bot.settings_logs import logger
+from bot.utils import check_message
 
 
 async def waiting_for_response(
@@ -14,14 +16,40 @@ async def waiting_for_response(
         context: ContextTypes.DEFAULT_TYPE
 ):
     """Получение ответа на уведомление"""
-    try:
-        msg: int = update.message.reply_to_message.message_id
-    except AttributeError:
-        pass
+    if update.message.reply_to_message:
+        if not update.message.reply_to_message.from_user.is_bot:
+            logger.info("Ответ не на сообщение бота, ждем следующих")
+        else:
+            msg: str = update.message.text.lower()
+            chat = update.effective_chat
+            if msg == "подтверждено":
+                try:
+                    msg_id: int = update.message.reply_to_message.message_id
+                except AttributeError:
+                    raise NotReplyId()
+                try:
+                    logger.info("Отправили данные для обновления статуса")
+                    await update_store_received_confirmation(message_id=msg_id)
+                    logger.info("Данные обновлены")
+                    await update.message.reply_text("Отлично")
+                except ProblemToGetUpdateDataWithDB as e:
+                    logger.error(
+                        f"Возникла ошибка при обновлении статуса: {e}"
+                    )
+                    await context.bot.send_message(
+                        chat_id=chat.id,
+                        text=f"Возникла ошибка при обновлении статуса: {e}"
+                    )
+            else:
+                logger.info(
+                    "В сообщении отсутствовало ключевое слово, сам виноват"
+                )
 
 
-
-async def new_store(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def new_store(
+        update: Update,
+        context: ContextTypes.DEFAULT_TYPE
+) -> None:
     """Получение/проверка/запись сообщения"""
     chat = update.effective_chat
     if chat.type == "private":
@@ -58,7 +86,7 @@ async def new_store(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             logger.info("Отправили данные для сохранения в БД")
             await create_to_db(message=message, chat_id=chat.id)
             logger.info("Данные сохранены")
-            await context.bot.send_message(chat_id=chat.id, text="Записал")
+            await update.message.reply_text("Записал")
         except Exception as e:
             await context.bot.send_message(
                 chat_id=chat.id,
@@ -67,7 +95,10 @@ async def new_store(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             raise ProblemToSaveInDB(error=e)
 
 
-async def example_template(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def example_template(
+        update: Update,
+        context: ContextTypes.DEFAULT_TYPE
+) -> None:
     chat = update.effective_chat
     try:
         await context.bot.send_message(chat_id=chat.id, text=TEMPLATE)
