@@ -6,7 +6,7 @@
 ![APScheduler](https://img.shields.io/badge/APScheduler-3.11.0-red.svg)
 
 ### Основные компоненты
-- **Telegram Bot** - получает команды от пользователей
+- **Python-telegram-bot** - получает команды от пользователей
 - **Scheduler** - планировщик задач (APScheduler)
 - **PostgeSQL** - хранилище задач и состояний
 
