@@ -14,7 +14,7 @@
 ### Схема взаимодействия
 ```mermaid
 graph TD
-    A[Telegram Bot] --> B[Scheduler]
+    A[Python-telegram-bot] --> B[Scheduler]
     B --> C[PostgeSQL]
     C --> D[Worker]
     D --> A
