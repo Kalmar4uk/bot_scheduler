@@ -108,19 +108,36 @@ async def added_store_in_reminders_table(stores: list[Store], message_id: int):
         await conn.close()
 
 
-async def update_store_received_confirmation(message_id: int):
+async def update_store_received_confirmation(
+        message_id: int,
+        store: list | None = None
+):
     """Обновление магазинов по которым получили подтверждение"""
     conn = await connect_to_db()
     try:
         async with conn.transaction():
-            values = await conn.execute(
-                """
-                UPDATE reminders
-                SET status = $1, last_notified_data = $2
-                WHERE message_id = $3
-                """,
-                STATUSES_FOR_REMINDERS["cn"], datetime.now(), message_id
-            )
+            if store:
+                values = await conn.execute(
+                    """
+                    UPDATE reminders
+                    SET status = $1, last_notified_data = $2
+                    WHERE store_id in (
+                    SELECT s.id FROM stores s WHERE s.sap_id ANY(store)
+                    ) AND status not in ($3, $4)
+                    """,
+                    STATUSES_FOR_REMINDERS["cn"],
+                    datetime.now(),
+                    (store,)
+                )
+            else:
+                values = await conn.execute(
+                    """
+                    UPDATE reminders
+                    SET status = $1, last_notified_data = $2
+                    WHERE message_id = $3
+                    """,
+                    STATUSES_FOR_REMINDERS["cn"], datetime.now(), message_id
+                )
             if int(values[-1]) == 0:
                 logger.error(f"message_id {message_id} отсутствует в базе")
                 raise ReplyIsEmpty(message_id=message_id)

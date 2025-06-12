@@ -1,0 +1,14 @@
+services:
+  db:
+    image: postgres:13
+    volumes:
+      - postgres:/var/lib/postgresql/data/
+    env_file: .env
+  bot:
+    build: .
+    env_file: .env
+    volumes:
+      - ./logs:/app/logs
+    
+volumes:
+  postgres:

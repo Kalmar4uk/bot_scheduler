@@ -6,11 +6,9 @@ from bot.exceptions import (ErrorSendMessage, IncorrectChat,
                             IncorrectDateOpenStore, IncorrectSapStore,
                             NotMessage, NotReplyId,
                             ProblemToGetUpdateDataWithDB, ProblemToSaveInDB)
-from bot.scheduler_handlers import search_messages_without_response
 from bot.settings_logs import logger
 from bot.utils import check_message
-from database.db import (create_to_db, get_reminders_for_repeat,
-                         update_store_received_confirmation)
+from database.db import create_to_db, update_store_received_confirmation
 
 
 async def waiting_for_response(
@@ -22,16 +20,19 @@ async def waiting_for_response(
         if not update.message.reply_to_message.from_user.is_bot:
             logger.info("Ответ не на сообщение бота, ждем следующих")
         else:
-            msg: str = update.message.text.lower()
+            msg: list[str] = update.message.text.capitalize().split(" ")
             chat = update.effective_chat
-            if msg == "подтверждено":
+            if msg[0] == "Подтверждено":
                 try:
                     msg_id: int = update.message.reply_to_message.message_id
                 except AttributeError:
                     raise NotReplyId()
                 try:
                     logger.info("Отправили данные для обновления статуса")
-                    await update_store_received_confirmation(message_id=msg_id)
+                    await update_store_received_confirmation(
+                        message_id=msg_id,
+                        store=msg[1:] if len(msg) > 1 else None
+                    )
                     logger.info("Данные обновлены")
                     await update.message.reply_text("Отлично")
                 except ProblemToGetUpdateDataWithDB as e:
@@ -71,15 +72,7 @@ async def new_store(
         logger.error("Возникла ошибка при преобразовании сообщения из чата")
     try:
         await check_message(message=message)
-    except NotMessage as e:
-        await context.bot.send_message(
-            chat_id=chat.id, text=f"error: {str(e)}"
-        )
-    except IncorrectSapStore as e:
-        await context.bot.send_message(
-            chat_id=chat.id, text=f"error: {str(e)}"
-        )
-    except IncorrectDateOpenStore as e:
+    except (NotMessage, IncorrectSapStore, IncorrectDateOpenStore) as e:
         await context.bot.send_message(
             chat_id=chat.id, text=f"error: {str(e)}"
         )
