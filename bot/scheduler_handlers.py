@@ -3,11 +3,13 @@ from datetime import datetime, timedelta
 from telegram import Message
 from telegram.ext import ApplicationBuilder
 
-from database.db import added_store_in_reminders_table, connect_to_db, get_stores
 from bot.exceptions import (ErrorSendMessage, InvalidMessageId,
                             ProblemToGetUpdateDataWithDB)
 from bot.settings_logs import logger
 from bot.utils import Store
+from database.db import (added_store_in_reminders_table,
+                         get_reminders_for_repeat, get_stores,
+                         update_reminders_for_repeat, messages_to_expired)
 
 
 async def send_message(
@@ -16,7 +18,7 @@ async def send_message(
     """Отправка сообщения планировщика в чат"""
     try:
         msg: Message = await app.bot.send_message(chat_id=chat_id, text=text)
-        logger.info("Отправили сообщение")
+        logger.info(f"Отправили сообщение {msg}")
     except Exception as e:
         logger.error(
             f"Возникла ошибка при отправке сообщения планировщика: {e}"
@@ -27,11 +29,11 @@ async def send_message(
 
 async def search_suitable_stores(app: ApplicationBuilder) -> None:
     """Поиск в БД подходящих объектов"""
-    conn = await connect_to_db()
+    logger.info("Начинаем поиск магазинов для отправки напоминания")
     try:
         values = await get_stores()
     except ProblemToGetUpdateDataWithDB:
-        await conn.close()
+        raise
     text: str = ""
     stores_for_reminders: list[Store] = []
     if values:
@@ -55,4 +57,31 @@ async def search_suitable_stores(app: ApplicationBuilder) -> None:
         )
     else:
         logger.info("Нет новых подходящих магазинов")
-    await conn.close()
+
+
+async def search_messages_without_response(app: ApplicationBuilder) -> None:
+    """Поиск в БД сообщений на которые не было реакции"""
+    logger.info("Начинаем поиск магазинов для отправки повторного напоминания")
+    values = await get_reminders_for_repeat()
+    message_ids_for_reminders: list[int] = []
+    text: str = (
+        "Повторное оповещение для магазинов "
+        "на которые не получено подтверждение:\n"
+    )
+    if values:
+        chat_id: int = values[0].get("chat_id")
+        for data in values:
+            store = Store.convertation_from_db(data=data)
+            text += f"Магазин {store.sap_id} дата {store.date}\n"
+            message_ids_for_reminders.append(store.message_id)
+        logger.info("Подготовили сообщение для отправки")
+        await send_message(text=text, chat_id=chat_id, app=app)
+        logger.info(
+            "Отправили данные для обновления статуса в таблице reminders"
+        )
+        await update_reminders_for_repeat(
+            message_ids=message_ids_for_reminders
+        )
+        logger.info("Данные обновлены")
+    else:
+        logger.info("Нет новых подходящих магазинов")

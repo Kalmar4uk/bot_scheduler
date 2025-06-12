@@ -1,6 +1,7 @@
 from datetime import datetime
 
-from bot.exceptions import IncorrectDateOpenStore, IncorrectSapStore, NotMessage
+from bot.exceptions import (IncorrectDateOpenStore, IncorrectSapStore,
+                            NotMessage)
 
 
 class Store:
@@ -12,13 +13,15 @@ class Store:
             date: datetime,
             description: str,
             id: int | None = None,
-            chat_id: int | None = None
+            chat_id: int | None = None,
+            message_id: int | None = None
     ):
         self.id = id
         self.sap_id = sap_id
         self.date = date
         self.chat_id = chat_id
         self.description = description
+        self.message_id = message_id
 
     @classmethod
     def convertation_from_message(cls, message: list, chat_id: int = None):
@@ -37,7 +40,8 @@ class Store:
             sap_id=data.get("sap_id"),
             date=data.get("date_event"),
             description=data.get("description"),
-            chat_id=data.get("chat_id")
+            chat_id=data.get("chat_id"),
+            message_id=data.get("message_id", None)
         )
 
 

@@ -6,7 +6,8 @@ from dotenv import load_dotenv
 
 from bot.constants import STATUSES_FOR_REMINDERS
 from bot.exceptions import (DoubleStore, ProblemConnectToDb,
-                            ProblemToGetUpdateDataWithDB, ProblemToSaveInDB, ReplyIsEmpty)
+                            ProblemToGetUpdateDataWithDB, ProblemToSaveInDB,
+                            ReplyIsEmpty)
 from bot.settings_logs import logger
 from bot.utils import Store
 
@@ -125,6 +126,84 @@ async def update_store_received_confirmation(message_id: int):
                 raise ReplyIsEmpty(message_id=message_id)
     except ReplyIsEmpty:
         raise
+    except Exception as e:
+        logger.error(f"Возникла ошибка при обновлении магазинов: {e}")
+        raise ProblemToGetUpdateDataWithDB(str(e))
+    finally:
+        await conn.close()
+
+
+async def get_reminders_for_repeat():
+    conn = await connect_to_db()
+    try:
+        async with conn.transaction():
+            values = await conn.fetch(
+                """
+                SELECT
+                s.id,
+                s.sap_id,
+                s.date_event,
+                s.description,
+                s.chat_id,
+                r.message_id
+                FROM stores s
+                JOIN reminders r ON r.store_id = s.id
+                WHERE r.status not in ($1, $2) and r.created_at < $3
+                """,
+                STATUSES_FOR_REMINDERS["cr"],
+                STATUSES_FOR_REMINDERS["ex"],
+                datetime.now()
+            )
+        logger.info("Получили данные из БД")
+    except Exception as e:
+        logger.error(f"Возникла ошибка при получении магазинов: {e}")
+        raise ProblemToGetUpdateDataWithDB(str(e))
+    finally:
+        await conn.close()
+    return values
+
+
+async def update_reminders_for_repeat(message_ids: list[int]):
+    """Обновление статуса повторно напоминания"""
+    conn = await connect_to_db()
+    try:
+        async with conn.transaction():
+            await conn.execute(
+                """
+                UPDATE reminders
+                SET status = $1, last_notified_data = $2
+                WHERE message_id = ANY($3)
+                """,
+                STATUSES_FOR_REMINDERS["rp"], datetime.now(), (message_ids,)
+            )
+    except Exception as e:
+        logger.error(f"Возникла ошибка при обновлении магазинов: {e}")
+        raise ProblemToGetUpdateDataWithDB(str(e))
+    finally:
+        await conn.close()
+
+
+async def messages_to_expired():
+    """Перевод напоминаний в просроченные"""
+    conn = await connect_to_db()
+    try:
+        async with conn.transaction():
+            await conn.execute(
+                """
+                UPDATE reminders
+                SET status = $1, last_notified_data = $2
+                WHERE store_id in (
+                SELECT s.id
+                FROM stores s
+                JOIN reminders r ON s.id = r.store_id
+                WHERE s.date_event < $2 and r.status != $4
+                )
+                """,
+                STATUSES_FOR_REMINDERS["ex"],
+                datetime.now(),
+                STATUSES_FOR_REMINDERS["cn"]
+            )
+            logger.info("Напоминания переведены в просроченные")
     except Exception as e:
         logger.error(f"Возникла ошибка при обновлении магазинов: {e}")
         raise ProblemToGetUpdateDataWithDB(str(e))
