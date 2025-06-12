@@ -1,8 +1,8 @@
 # Бот напоминалка
 *Создавался для рабочих целей, но может быть подкорректирован под любые цели*
 
-![Python](https://img.shields.io/badge/Python-3.11+-yellow.svg)
-![Telegram](https://img.shields.io/badge/Telegram_Bot_API-6.0+-blue.svg)
+![Python](https://img.shields.io/badge/Python-3.11-yellow.svg)
+![Telegram](https://img.shields.io/badge/python-telegram-bot-22.1-blue.svg)
 
 ### Основные компоненты
 - **Telegram Bot** - получает команды от пользователей
