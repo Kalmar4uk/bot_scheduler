@@ -2,7 +2,8 @@
 *Создавался для рабочих целей, но может быть подкорректирован под любые цели*
 
 ![Python](https://img.shields.io/badge/Python-3.11-yellow.svg)
-![Telegram](https://img.shields.io/badge/python-telegram-bot-22.1-blue.svg)
+![python-telegram-bot](https://img.shields.io/badge/python--telegram--bot-22.1-blue.svg)
+![APScheduler](https://img.shields.io/badge/APScheduler-3.11.0-red.svg)
 
 ### Основные компоненты
 - **Telegram Bot** - получает команды от пользователей
