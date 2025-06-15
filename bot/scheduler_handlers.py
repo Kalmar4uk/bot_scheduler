@@ -9,7 +9,7 @@ from bot.settings_logs import logger
 from bot.utils import Store
 from database.db import (added_store_in_reminders_table,
                          get_reminders_for_repeat, get_stores,
-                         update_reminders_for_repeat, messages_to_expired)
+                         messages_to_expired, update_reminders_for_repeat)
 
 
 async def send_message(

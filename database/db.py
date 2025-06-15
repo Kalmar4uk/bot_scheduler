@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from bot.constants import STATUSES_FOR_REMINDERS
 from bot.exceptions import (DoubleStore, ProblemConnectToDb,
                             ProblemToGetUpdateDataWithDB, ProblemToSaveInDB,
-                            ReplyIsEmpty)
+                            ReplyIsEmpty, StoreNotFound)
 from bot.settings_logs import logger
 from bot.utils import Store
 
@@ -30,9 +30,8 @@ async def connect_to_db():
     return conn
 
 
-async def create_to_db(message: list, chat_id: int):
+async def create_to_db(store: Store):
     """Запись новых данных в БД"""
-    store = Store.convertation_from_message(message=message, chat_id=chat_id)
     conn = await connect_to_db()
     try:
         async with conn.transaction():
@@ -181,7 +180,7 @@ async def get_reminders_for_repeat():
 
 
 async def update_reminders_for_repeat(message_ids: list[int]):
-    """Обновление статуса повторно напоминания"""
+    """Обновление статуса повторного напоминания"""
     conn = await connect_to_db()
     try:
         async with conn.transaction():
@@ -226,3 +225,37 @@ async def messages_to_expired():
         raise ProblemToGetUpdateDataWithDB(str(e))
     finally:
         await conn.close()
+
+
+async def update_event_or_date_event(
+        sap_id: str,
+        date: datetime | None = None,
+        description: str | None = None
+):
+    """Обновление даты или события магазина"""
+    conn = await connect_to_db()
+    try:
+        async with conn.transaction():
+            if date:
+                values = await conn.execute(
+                    """
+                    UPDATE stores
+                    SET date_event = $1
+                    WHERE sap_id = $2 and date_event > $3
+                    """,
+                    date, sap_id, datetime.now()
+                )
+            elif description:
+                values = await conn.execute(
+                    """
+                    UPDATE stores
+                    SET description = $1
+                    WHERE sap_id = $2 and date_event > $3
+                    """,
+                    description, sap_id, datetime.now()
+                )
+            if int(values[-1]) == 0:
+                raise StoreNotFound()
+    except Exception as e:
+        logger.error(f"Возникла ошибка при обновлении магазинов: {e}")
+        raise ProblemToGetUpdateDataWithDB(str(e))

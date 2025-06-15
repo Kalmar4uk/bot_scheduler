@@ -23,7 +23,7 @@ class IncorrectDateOpenStore(Exception):
 
 
 class ProblemConnectToDb(Exception):
-    """Исключение во время ошибки при подключении к БД"""
+    """Ошибка при подключении к БД"""
 
     def __init__(self, error=None):
         self.error = error
@@ -49,7 +49,7 @@ class IncorrectChat(Exception):
 
 
 class DoubleStore(Exception):
-    """Исключение повторно добавления магазина"""
+    """Исключение повторного добавления магазина"""
 
     def __init__(
             self,
@@ -91,3 +91,11 @@ class ReplyIsEmpty(Exception):
         self.error = error
         self.message_id = message_id
         super().__init__(self.error, message_id)
+
+
+class StoreNotFound(Exception):
+    """Магазин отсутсвует в базе"""
+
+    def __init__(self, error="Магазин отсутствует в БД"):
+        self.error = error
+        super().__init__(self.error)

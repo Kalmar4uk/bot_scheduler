@@ -1,17 +1,14 @@
 from datetime import datetime
 
-from bot.exceptions import (IncorrectDateOpenStore, IncorrectSapStore,
-                            NotMessage)
-
 
 class Store:
     """Класс для магазина"""
 
     def __init__(
             self,
-            sap_id: int,
-            date: datetime,
-            description: str,
+            sap_id: int | None = None,
+            date: datetime | None = None,
+            description: str | None = None,
             id: int | None = None,
             chat_id: int | None = None,
             message_id: int | None = None
@@ -24,16 +21,6 @@ class Store:
         self.message_id = message_id
 
     @classmethod
-    def convertation_from_message(cls, message: list, chat_id: int = None):
-        """Метод класса для сохранения и преобразования даты в объект даты"""
-        return cls(
-            sap_id=message[0],
-            date=datetime.strptime(message[1], "%d.%m.%Y").date(),
-            description=message[2],
-            chat_id=chat_id
-        )
-
-    @classmethod
     def convertation_from_db(cls, data: dict):
         return cls(
             id=data.get("id"),
@@ -44,14 +31,9 @@ class Store:
             message_id=data.get("message_id", None)
         )
 
-
-async def check_message(message: list) -> None:
-    """Проверка полученного сообщения"""
-    if len(message) < 2:
-        raise NotMessage()
-    elif len(message[0]) < 4:
-        raise IncorrectSapStore()
-    try:
-        datetime.strptime(message[1], "%d.%m.%Y").date()
-    except ValueError:
-        raise IncorrectDateOpenStore()
+    def save_sap(self, sap: str):
+        if sap.isalpha():
+            new_sap = "B" + sap[1:]
+            self.sap_id = new_sap
+        else:
+            self.sap_id = sap

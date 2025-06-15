@@ -8,14 +8,15 @@ from dotenv import load_dotenv
 from telegram.ext import (ApplicationBuilder, CommandHandler, MessageHandler,
                           filters)
 
-from bot.bot_handlers import (example_template, hello, new_store,
-                              waiting_for_response)
+from bot.bot_handlers.handlers import (handlers_added_store,
+                                       handlers_change_date_event,
+                                       start_handler)
 from bot.constants import TOKEN
 from bot.exceptions import ErrorStartSchedule
 from bot.scheduler_handlers import (search_messages_without_response,
                                     search_suitable_stores)
-from database.db import messages_to_expired
 from bot.settings_logs import logger
+from database.db import messages_to_expired
 
 load_dotenv()
 nest_asyncio.apply()
@@ -62,18 +63,12 @@ async def setup_scheduler() -> AsyncIOScheduler:
 
 async def setup() -> None:
     """Главная функция запусков"""
-    scheduler = await setup_scheduler()
-
-    app.add_handler(CommandHandler("start", hello))
-    app.add_handler(CommandHandler("template", example_template))
-    app.add_handler(CommandHandler("new_store", new_store))
-    app.add_handler(MessageHandler(filters.TEXT, waiting_for_response))
+    await setup_scheduler()
+    await start_handler(app=app)
+    await handlers_added_store(app=app)
+    await handlers_change_date_event(app=app)
 
     try:
         await app.run_polling()
-    except KeyboardInterrupt:
-        logger.info("Принудительно завершили работу бота")
-        print("Завершили работу")
-    finally:
-        await app.shutdown()
-        scheduler.shutdown()
+    except (KeyboardInterrupt, RuntimeError):
+        logger.info("Принудительная остановка бота")

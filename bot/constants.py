@@ -20,3 +20,10 @@ STATUSES_FOR_REMINDERS = {
     "ex": "expired"
 
 }
+
+SAP = 0
+DESCRIPTION = 1
+DATE = 1
+EVENT = 1
+
+STEP = {"y": "год", "m": "месяц", "d": "день"}
