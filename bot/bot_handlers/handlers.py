@@ -6,8 +6,8 @@ from bot.bot_handlers.added_store import (calendar_for_added_store,
                                           sap_id_for_added_store)
 from bot.bot_handlers.change_date_event import (calendar_for_change_date,
                                                 sap_id_for_change_date)
-from bot.bot_handlers.change_event import (sap_id_for_change_description,
-                                           description_for_change)
+from bot.bot_handlers.change_event import (description_for_change,
+                                           sap_id_for_change_description)
 from bot.bot_handlers.default import (add_store, cancel, change_date,
                                       change_event, start)
 from bot.constants import DESCRIPTION, SAP

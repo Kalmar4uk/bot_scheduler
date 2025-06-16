@@ -1,8 +1,10 @@
 from datetime import datetime
+
 from dotenv import load_dotenv
 
 from bot.constants import STATUSES_FOR_REMINDERS
-from bot.exceptions import ProblemToGetUpdateDataWithDB, ReplyIsEmpty, StoreNotFound
+from bot.exceptions import (ProblemToGetUpdateDataWithDB, ReplyIsEmpty,
+                            StoreNotFound)
 from bot.settings_logs import logger
 from database.connect import connect_to_db
 

@@ -10,8 +10,7 @@ from telegram.ext import (ApplicationBuilder, CommandHandler, MessageHandler,
 
 from bot.bot_handlers.handlers import (handlers_added_store,
                                        handlers_change_date_event,
-                                       handlers_change_event,
-                                       start_handler)
+                                       handlers_change_event, start_handler)
 from bot.constants import TOKEN
 from bot.exceptions import ErrorStartSchedule
 from bot.scheduler_handlers import (search_messages_without_response,

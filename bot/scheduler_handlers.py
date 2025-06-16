@@ -1,7 +1,7 @@
 from telegram import Message
 from telegram.ext import ApplicationBuilder
 
-
+from bot.constants import CHAT_ID
 from bot.exceptions import (ErrorSendMessage, InvalidMessageId,
                             ProblemToGetUpdateDataWithDB)
 from bot.settings_logs import logger
@@ -9,7 +9,6 @@ from bot.utils import Store
 from database.create import added_store_in_reminders_table
 from database.get import get_reminders_for_repeat, get_stores
 from database.update import update_reminders_for_repeat
-from bot.constants import CHAT_ID
 
 
 async def send_message(

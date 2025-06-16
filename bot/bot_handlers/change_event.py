@@ -1,11 +1,11 @@
-from telegram import Update, ReplyKeyboardMarkup
-from telegram.ext import ConversationHandler, ContextTypes
+from telegram import ReplyKeyboardMarkup, Update
+from telegram.ext import ContextTypes, ConversationHandler
 
+from bot.constants import DESCRIPTION
 from bot.exceptions import ProblemToGetUpdateDataWithDB
 from bot.settings_logs import logger
 from bot.utils import Store
 from database.create import update_event_or_date_event
-from bot.constants import DESCRIPTION
 
 
 async def sap_id_for_change_description(
