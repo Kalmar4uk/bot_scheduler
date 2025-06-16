@@ -1,13 +1,13 @@
 import json
 
-from telegram import InlineKeyboardMarkup, ReplyKeyboardRemove, Update
-from telegram.ext import CallbackContext, ContextTypes, ConversationHandler
+from telegram import InlineKeyboardMarkup, Update
+from telegram.ext import CallbackContext, ConversationHandler
 from telegram_bot_calendar import DetailedTelegramCalendar
 
 from bot.exceptions import ProblemToGetUpdateDataWithDB
 from bot.settings_logs import logger
 from bot.utils import Store
-from database.db import update_event_or_date_event
+from database.update import update_event_or_date_event
 
 
 async def sap_id_for_change_date(update: Update, context: CallbackContext):
@@ -65,12 +65,3 @@ async def calendar_for_change_date(update: Update, context: CallbackContext):
             )
         finally:
             return ConversationHandler.END
-
-
-async def cancel_change_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Остановка диалога"""
-    await update.message.reply_text(
-        "Запись остановлена",
-        reply_markup=ReplyKeyboardRemove()
-    )
-    return ConversationHandler.END

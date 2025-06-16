@@ -9,7 +9,7 @@ from bot.constants import DESCRIPTION
 from bot.exceptions import ProblemToSaveInDB
 from bot.settings_logs import logger
 from bot.utils import Store
-from database.db import create_to_db
+from database.create import create_to_db
 
 
 async def sap_id_for_added_store(update: Update, context: CallbackContext):
@@ -67,12 +67,12 @@ async def calendar_for_added_store(update: Update, context: CallbackContext):
         )
 
 
-async def description_for_added_store(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def description_for_added_store(
+        update: Update, context: ContextTypes.DEFAULT_TYPE
+):
     """Получение описания и сохранение магазина в БД"""
-    chat_id: int = update.effective_chat.id
     store: Store = context.user_data["store"]
     store.description = update.message.text
-    store.chat_id = chat_id
     try:
         logger.info("Отправили данные для сохранения в БД")
         await create_to_db(store=store)
@@ -85,12 +85,3 @@ async def description_for_added_store(update: Update, context: ContextTypes.DEFA
         await update.message.reply_text(text=e)
     finally:
         return ConversationHandler.END
-
-
-async def cancel_added_store(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Остановка диалога"""
-    await update.message.reply_text(
-        "Запись остановлена",
-        reply_markup=ReplyKeyboardRemove()
-    )
-    return ConversationHandler.END

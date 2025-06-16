@@ -10,13 +10,11 @@ class Store:
             date: datetime | None = None,
             description: str | None = None,
             id: int | None = None,
-            chat_id: int | None = None,
             message_id: int | None = None
     ):
         self.id = id
         self.sap_id = sap_id
         self.date = date
-        self.chat_id = chat_id
         self.description = description
         self.message_id = message_id
 
@@ -27,7 +25,6 @@ class Store:
             sap_id=data.get("sap_id"),
             date=data.get("date_event"),
             description=data.get("description"),
-            chat_id=data.get("chat_id"),
             message_id=data.get("message_id", None)
         )
 

@@ -39,6 +39,15 @@ async def change_event(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return await base_func_request_sat(update=update, context=context)
 
 
+async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Остановка диалога"""
+    await update.message.reply_text(
+        "Запись остановлена",
+        reply_markup=ReplyKeyboardRemove()
+    )
+    return ConversationHandler.END
+
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Описание команд"""
     reply_keyboard = [["/add_store"], ["/change_date"], ["/change_event"]]

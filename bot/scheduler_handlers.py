@@ -1,23 +1,23 @@
-from datetime import datetime, timedelta
-
 from telegram import Message
 from telegram.ext import ApplicationBuilder
+
 
 from bot.exceptions import (ErrorSendMessage, InvalidMessageId,
                             ProblemToGetUpdateDataWithDB)
 from bot.settings_logs import logger
 from bot.utils import Store
-from database.db import (added_store_in_reminders_table,
-                         get_reminders_for_repeat, get_stores,
-                         messages_to_expired, update_reminders_for_repeat)
+from database.create import added_store_in_reminders_table
+from database.get import get_reminders_for_repeat, get_stores
+from database.update import update_reminders_for_repeat
+from bot.constants import CHAT_ID
 
 
 async def send_message(
-        text: str, chat_id: int, app: ApplicationBuilder
+        text: str, app: ApplicationBuilder
 ) -> int:
     """Отправка сообщения планировщика в чат"""
     try:
-        msg: Message = await app.bot.send_message(chat_id=chat_id, text=text)
+        msg: Message = await app.bot.send_message(chat_id=CHAT_ID, text=text)
         logger.info(f"Отправили сообщение {msg}")
     except Exception as e:
         logger.error(
@@ -37,7 +37,6 @@ async def search_suitable_stores(app: ApplicationBuilder) -> None:
     text: str = ""
     stores_for_reminders: list[Store] = []
     if values:
-        chat_id: int = values[0].get("chat_id")
         for data in values:
             store = Store.convertation_from_db(data=data)
             text += (
@@ -46,7 +45,7 @@ async def search_suitable_stores(app: ApplicationBuilder) -> None:
             )
             stores_for_reminders.append(store)
         logger.info("Подготовили сообщение для отправки")
-        msg: int = await send_message(text=text, chat_id=chat_id, app=app)
+        msg: int = await send_message(text=text, app=app)
         if not (msg and isinstance(msg, int)):
             logger.error("message_id не поступил или его тип не соответствует")
             raise InvalidMessageId()
@@ -69,13 +68,12 @@ async def search_messages_without_response(app: ApplicationBuilder) -> None:
         "на которые не получено подтверждение:\n"
     )
     if values:
-        chat_id: int = values[0].get("chat_id")
         for data in values:
             store = Store.convertation_from_db(data=data)
             text += f"Магазин {store.sap_id} дата {store.date}\n"
             message_ids_for_reminders.append(store.message_id)
         logger.info("Подготовили сообщение для отправки")
-        await send_message(text=text, chat_id=chat_id, app=app)
+        await send_message(text=text, app=app)
         logger.info(
             "Отправили данные для обновления статуса в таблице reminders"
         )
