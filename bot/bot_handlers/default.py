@@ -12,6 +12,7 @@ async def base_func_request_sat(
         context: ContextTypes.DEFAULT_TYPE
 ):
     """Базовая функция запроса сап номера"""
+    logger.info("Отправили запрос sap_id")
     await update.message.reply_text(
         "Введи sap магазина или отправь /cancel для остановки"
     )
@@ -45,6 +46,7 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "Запись остановлена",
         reply_markup=ReplyKeyboardRemove()
     )
+    logger.info("Диалог остановлен")
     return ConversationHandler.END
 
 

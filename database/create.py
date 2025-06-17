@@ -33,6 +33,10 @@ async def create_to_db(store: Store):
                 """,
                 store.sap_id, store.date, store.description
             )
+            logger.info(
+                f"Магазин {store.sap_id} сохранен в БД "
+                f"с евентом {store.description}"
+            )
     except Exception as e:
         logger.error(f"Возникла ошибка при записи в БД: {e}")
         raise ProblemToSaveInDB(error=e)
@@ -56,7 +60,7 @@ async def added_store_in_reminders_table(stores: list[Store], message_id: int):
                     store.id, message_id,
                     STATUSES_FOR_REMINDERS["cr"], datetime.now()
                 )
-        logger.info("Данные добавлены")
+            logger.info(f"Магазин {store.sap_id} добавлен в таблицу reminders")
     except Exception as e:
         logger.error(f"Возникла ошибка при записи в БД: {e}")
         raise ProblemToSaveInDB(error=e)

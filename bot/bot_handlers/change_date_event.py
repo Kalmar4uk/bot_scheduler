@@ -8,11 +8,12 @@ from bot.exceptions import ProblemToGetUpdateDataWithDB
 from bot.settings_logs import logger
 from bot.utils import Store
 from database.update import update_event_or_date_event
+from bot.exceptions import ErrorSendMessage
 
 
 async def sap_id_for_change_date(update: Update, context: CallbackContext):
     """Получение sap_id и активация инлайн календаря для ввода даты"""
-    logger.info("Запросили sap_id магазина")
+    logger.info("Получили sap_id магазина")
     store: Store = context.user_data["store"]
     store.save_sap(update.message.text)
 
@@ -21,14 +22,20 @@ async def sap_id_for_change_date(update: Update, context: CallbackContext):
 
     reply_markup = InlineKeyboardMarkup(calendar_data["inline_keyboard"])
 
-    await update.message.reply_text(
-        "Выбери дату или отправь /cancel для остановки:",
-        reply_markup=reply_markup
-    )
+    try:
+        await update.message.reply_text(
+            "Выбери дату или отправь /cancel для остановки:",
+            reply_markup=reply_markup
+        )
+        logger.info("Отправили календарь")
+    except Exception as e:
+        logger.error(f"Возникла ошибка при отправке календаря: {e}")
+        raise ErrorSendMessage(e)
 
 
 async def calendar_for_change_date(update: Update, context: CallbackContext):
     """Работа с календарем"""
+    logger.info("Календарь запущен")
     result, key, _ = DetailedTelegramCalendar(
         locale="ru"
     ).process(
@@ -38,12 +45,16 @@ async def calendar_for_change_date(update: Update, context: CallbackContext):
     if not result and key:
         key = json.loads(key)
         reply_markup = InlineKeyboardMarkup(key["inline_keyboard"])
-
-        await update.callback_query.edit_message_text(
-            "Выбери новую дату или отправь /cancel для остановки:",
-            reply_markup=reply_markup
-        )
+        try:
+            await update.callback_query.edit_message_text(
+                "Выбери новую дату или отправь /cancel для остановки:",
+                reply_markup=reply_markup
+            )
+        except Exception as e:
+            logger.error(f"Возникла ошибка при отправке календаря: {e}")
+            raise ErrorSendMessage(e)
     elif result:
+        logger.info("Получили данные из календаря")
         await update.callback_query.edit_message_text(
             f"Выбрана дата: {result}"
         )

@@ -13,7 +13,7 @@ load_dotenv()
 async def get_stores():
     """Получение магазинов из БД"""
     conn = await connect_to_db()
-    date: datetime = datetime.now().date() + timedelta(days=5)
+    date: datetime = datetime.now().date() + timedelta(days=1)
     try:
         async with conn.transaction():
             values = await conn.fetch(
@@ -50,7 +50,7 @@ async def get_reminders_for_repeat():
                 JOIN reminders r ON r.store_id = s.id
                 WHERE r.status not in ($1, $2) and r.created_at < $3
                 """,
-                STATUSES_FOR_REMINDERS["cr"],
+                STATUSES_FOR_REMINDERS["cn"],
                 STATUSES_FOR_REMINDERS["ex"],
                 datetime.now()
             )

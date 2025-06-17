@@ -16,7 +16,7 @@ from bot.exceptions import ErrorStartSchedule
 from bot.scheduler_handlers import (search_messages_without_response,
                                     search_suitable_stores)
 from bot.settings_logs import logger
-from database.db import messages_to_expired
+from database.update import messages_to_expired
 
 load_dotenv()
 nest_asyncio.apply()
@@ -33,7 +33,7 @@ async def setup_scheduler() -> AsyncIOScheduler:
         scheduler = AsyncIOScheduler()
         scheduler.add_job(
             search_suitable_stores,
-            CronTrigger(hour=9, minute=30),
+            CronTrigger(hour=12, minute=35, second=30),
             id="daily_check",
             timezone="Europe/Moscow",
             kwargs={"app": app}

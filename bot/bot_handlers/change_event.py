@@ -5,7 +5,8 @@ from bot.constants import DESCRIPTION
 from bot.exceptions import ProblemToGetUpdateDataWithDB
 from bot.settings_logs import logger
 from bot.utils import Store
-from database.create import update_event_or_date_event
+from database.update import update_event_or_date_event
+from bot.exceptions import ErrorSendMessage
 
 
 async def sap_id_for_change_description(
@@ -13,7 +14,7 @@ async def sap_id_for_change_description(
         context: ContextTypes.DEFAULT_TYPE
 ):
     """Получение sap_id"""
-    logger.info("Запросили sap_id магазина")
+    logger.info("Получили sap_id магазина")
     store: Store = context.user_data["store"]
     store.save_sap(update.message.text)
 
@@ -22,12 +23,16 @@ async def sap_id_for_change_description(
         ["Отключить задачи", "Включить задачи"]
     ]
 
-    await update.message.reply_text(
-        "Выбери событие или отправь /cancel для остановки",
-        reply_markup=ReplyKeyboardMarkup(
-            keyboard=reply_keyboard, one_time_keyboard=True
-        ),
-    )
+    try:
+        await update.message.reply_text(
+            "Выбери событие или отправь /cancel для остановки",
+            reply_markup=ReplyKeyboardMarkup(
+                keyboard=reply_keyboard, one_time_keyboard=True
+            ),
+        )
+    except Exception as e:
+        logger.error(f"Возникла ошибка при отправке сообщения: {e}")
+        raise ErrorSendMessage(e)
 
     return DESCRIPTION
 
@@ -36,7 +41,7 @@ async def description_for_change(
         update: Update,
         context: ContextTypes.DEFAULT_TYPE
 ):
-    logger.info("Получили sap магазина")
+    logger.info("Получили событие магазина")
     store: Store = context.user_data["store"]
     store.description = update.message.text
     try:

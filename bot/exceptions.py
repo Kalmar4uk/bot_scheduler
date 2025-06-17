@@ -60,7 +60,7 @@ class DoubleStore(Exception):
 
 
 class ErrorSendMessage(Exception):
-    """Исключение ошибки отправления сообщения планировщика"""
+    """Исключение ошибки отправления сообщения"""
     pass
 
 

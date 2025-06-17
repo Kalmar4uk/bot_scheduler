@@ -1,4 +1,4 @@
-from telegram import Message
+from telegram import Message, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder
 
 from bot.constants import CHAT_ID
@@ -12,12 +12,36 @@ from database.update import update_reminders_for_repeat
 
 
 async def send_message(
-        text: str, app: ApplicationBuilder
+        text: str,
+        app: ApplicationBuilder,
+        stores: list[Store]
 ) -> int:
     """Отправка сообщения планировщика в чат"""
+    if len(stores) > 1:
+        keyboard = [
+            [
+                InlineKeyboardButton(
+                    text=f"Подтвердить {store.sap_id}",
+                    callback_data=f"confirm {store.sap_id}"
+                ) for store in stores
+            ],
+            [InlineKeyboardButton(text="Подтвердить все", callback_data="all")]
+        ]
+    else:
+        keyboard = [
+            [
+                InlineKeyboardButton(
+                    text=f"Подтвердить {store.sap_id}",
+                    callback_data=f"confirm {store.sap_id}"
+                ) for store in stores
+            ]
+        ]
+    reply = InlineKeyboardMarkup(keyboard)
     try:
-        msg: Message = await app.bot.send_message(chat_id=CHAT_ID, text=text)
-        logger.info(f"Отправили сообщение {msg}")
+        msg: Message = await app.bot.send_message(
+            chat_id=CHAT_ID, text=text, reply_markup=reply
+        )
+        logger.info(f"Отправили сообщение {msg.text}")
     except Exception as e:
         logger.error(
             f"Возникла ошибка при отправке сообщения планировщика: {e}"
@@ -33,24 +57,27 @@ async def search_suitable_stores(app: ApplicationBuilder) -> None:
         values = await get_stores()
     except ProblemToGetUpdateDataWithDB:
         raise
-    text: str = ""
-    stores_for_reminders: list[Store] = []
+    text: str = "Необходимо провести работы\n"
+    stores: list[Store] = []
     if values:
         for data in values:
             store = Store.convertation_from_db(data=data)
             text += (
-                f"Необходимо провести работы {store.description} "
-                f"с СМ {store.sap_id} до {store.date}\n"
+                f"{store.description} с СМ {store.sap_id} до {store.date}\n"
             )
-            stores_for_reminders.append(store)
+            stores.append(store)
         logger.info("Подготовили сообщение для отправки")
-        msg: int = await send_message(text=text, app=app)
+        msg: int = await send_message(
+            text=text,
+            app=app,
+            stores=stores
+        )
         if not (msg and isinstance(msg, int)):
             logger.error("message_id не поступил или его тип не соответствует")
             raise InvalidMessageId()
         logger.info("Отправили данные для добавления в таблицу reminders")
         await added_store_in_reminders_table(
-            stores=stores_for_reminders,
+            stores=stores,
             message_id=msg
         )
     else:
@@ -81,4 +108,4 @@ async def search_messages_without_response(app: ApplicationBuilder) -> None:
         )
         logger.info("Данные обновлены")
     else:
-        logger.info("Нет новых подходящих магазинов")
+        logger.info("Нет подходящих магазинов для повторения")
