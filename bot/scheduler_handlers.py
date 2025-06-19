@@ -1,5 +1,5 @@
-from telegram import Message, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ApplicationBuilder
+from telegram import Message, InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.ext import ApplicationBuilder, CallbackContext
 
 from bot.constants import CHAT_ID
 from bot.exceptions import (ErrorSendMessage, InvalidMessageId,
@@ -8,7 +8,7 @@ from bot.settings_logs import logger
 from bot.utils import Store
 from database.create import added_store_in_reminders_table
 from database.get import get_reminders_for_repeat, get_stores
-from database.update import update_reminders_for_repeat
+from database.update import update_reminders_for_repeat, update_store_received_confirmation
 
 
 async def send_message(
@@ -21,7 +21,7 @@ async def send_message(
         keyboard = [
             [
                 InlineKeyboardButton(
-                    text=f"Подтвердить {store.sap_id}",
+                    text=f"Под-ть {store.sap_id}",
                     callback_data=f"confirm {store.sap_id}"
                 ) for store in stores
             ],
@@ -31,7 +31,7 @@ async def send_message(
         keyboard = [
             [
                 InlineKeyboardButton(
-                    text=f"Подтвердить {store.sap_id}",
+                    text=f"Под-ть {store.sap_id}",
                     callback_data=f"confirm {store.sap_id}"
                 ) for store in stores
             ]
@@ -48,6 +48,32 @@ async def send_message(
         )
         raise ErrorSendMessage(e)
     return msg.message_id
+
+
+async def reminders_button(update: Update, context: CallbackContext):
+    query = update.callback_query
+    query_data = query.data
+
+    await query.answer()
+
+    if query_data == "all":
+        stores_data = await get_stores()
+        stores = [
+            Store.convertation_from_db(data=store).sap_id
+            for store in stores_data
+        ]
+        await update_store_received_confirmation(store=stores)
+
+        await query.edit_message_text("Сохранил")
+    else:
+        change_store = query_data.replace('confirm', '')[1:]
+        await update_store_received_confirmation(store=change_store)
+
+        await query.message.reply_text(
+            f"Сохранил магазин {change_store}, "
+            f"если решил подтвердить другой, "
+            f"выбери его или 'Подвердить все'"
+        )
 
 
 async def search_suitable_stores(app: ApplicationBuilder) -> None:

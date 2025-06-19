@@ -12,40 +12,42 @@ load_dotenv()
 
 
 async def update_store_received_confirmation(
-        message_id: int,
-        store: list | None = None
+        store: list | str
 ):
     """Обновление магазинов по которым получили подтверждение"""
     conn = await connect_to_db()
     try:
         async with conn.transaction():
-            if store:
-                values = await conn.execute(
+            if isinstance(store, list):
+                await conn.execute(
                     """
                     UPDATE reminders
                     SET status = $1, last_notified_data = $2
                     WHERE store_id in (
-                    SELECT s.id FROM stores s WHERE s.sap_id ANY(store)
-                    ) AND status not in ($3, $4)
+                    SELECT s.id FROM stores s WHERE s.sap_id = ANY($3::text[])
+                    ) AND status not in ($4, $5)
                     """,
                     STATUSES_FOR_REMINDERS["cn"],
                     datetime.now(),
-                    (store,)
+                    store,
+                    STATUSES_FOR_REMINDERS["cn"],
+                    STATUSES_FOR_REMINDERS["ex"]
                 )
             else:
-                values = await conn.execute(
+                await conn.execute(
                     """
                     UPDATE reminders
                     SET status = $1, last_notified_data = $2
-                    WHERE message_id = $3
+                    WHERE store_id = (
+                    SELECT s.id FROM stores s WHERE s.sap_id = $3
+                    ) AND status not in ($4, $5)
                     """,
-                    STATUSES_FOR_REMINDERS["cn"], datetime.now(), message_id
+                    STATUSES_FOR_REMINDERS["cn"],
+                    datetime.now(),
+                    store,
+                    STATUSES_FOR_REMINDERS["cn"],
+                    STATUSES_FOR_REMINDERS["ex"]
                 )
-        if int(values[-1]) == 0:
-            logger.error(f"message_id {message_id} отсутствует в базе")
-            raise ReplyIsEmpty(message_id=message_id)
-    except ReplyIsEmpty:
-        raise
     except Exception as e:
         logger.error(f"Возникла ошибка при обновлении магазинов: {e}")
         raise ProblemToGetUpdateDataWithDB(str(e))

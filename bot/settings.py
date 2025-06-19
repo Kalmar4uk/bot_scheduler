@@ -5,7 +5,7 @@ import sentry_sdk
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from dotenv import load_dotenv
-from telegram.ext import (ApplicationBuilder, CommandHandler, MessageHandler,
+from telegram.ext import (ApplicationBuilder, CallbackQueryHandler, CommandHandler, MessageHandler,
                           filters)
 
 from bot.bot_handlers.handlers import (handlers_added_store,
@@ -14,7 +14,7 @@ from bot.bot_handlers.handlers import (handlers_added_store,
 from bot.constants import TOKEN
 from bot.exceptions import ErrorStartSchedule
 from bot.scheduler_handlers import (search_messages_without_response,
-                                    search_suitable_stores)
+                                    search_suitable_stores, reminders_button)
 from bot.settings_logs import logger
 from database.update import messages_to_expired
 
@@ -33,7 +33,7 @@ async def setup_scheduler() -> AsyncIOScheduler:
         scheduler = AsyncIOScheduler()
         scheduler.add_job(
             search_suitable_stores,
-            CronTrigger(hour=12, minute=35, second=30),
+            CronTrigger(hour=20, minute=50, second=20),
             id="daily_check",
             timezone="Europe/Moscow",
             kwargs={"app": app}
@@ -68,6 +68,7 @@ async def setup() -> None:
     await handlers_added_store(app=app)
     await handlers_change_event(app=app)
     await handlers_change_date_event(app=app)
+    app.add_handler(CallbackQueryHandler(reminders_button))
 
     try:
         await app.run_polling()
