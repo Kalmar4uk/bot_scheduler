@@ -3,7 +3,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 
 from bot.constants import STATUSES_FOR_REMINDERS
-from bot.exceptions import (ProblemToGetUpdateDataWithDB, ReplyIsEmpty,
+from bot.exceptions import (ProblemToGetUpdateDataWithDB,
                             StoreNotFound)
 from bot.settings_logs import logger
 from bot.utils import Store
