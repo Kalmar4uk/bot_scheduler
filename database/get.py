@@ -18,9 +18,9 @@ async def get_stores():
         async with conn.transaction():
             values = await conn.fetch(
                 """
-                SELECT id, sap_id, date_event, description
-                FROM stores
-                WHERE date_event = $1
+                SELECT s.id, s.sap_id, s.date_event, s.description
+                FROM stores s
+                WHERE s.date_event = $1
                 """,
                 date
             )
@@ -41,6 +41,7 @@ async def get_reminders_for_repeat():
             values = await conn.fetch(
                 """
                 SELECT
+                s.id,
                 s.sap_id,
                 s.date_event,
                 s.description

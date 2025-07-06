@@ -5,7 +5,6 @@ from bot.constants import SAP
 from bot.exceptions import ErrorSendMessage
 from bot.settings_logs import logger
 from bot.utils import Store
-from bot.scheduler.reminders_stores_scheduler import search_messages_without_response
 
 
 async def base_func_request_sat(

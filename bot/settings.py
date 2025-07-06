@@ -34,14 +34,14 @@ async def setup_scheduler() -> AsyncIOScheduler:
         scheduler = AsyncIOScheduler()
         scheduler.add_job(
             search_suitable_stores,
-            CronTrigger(hour=11, minute=26, second=50),
+            CronTrigger(hour=14, minute=35, second=10),
             id="daily_check",
             timezone="Europe/Moscow",
             kwargs={"app": app}
         )
         scheduler.add_job(
             search_messages_without_response,
-            CronTrigger(hour=12, minute=50, second=30),
+            CronTrigger(hour=14, minute=10, second=40),
             id="repeat_check",
             timezone="Europe/Moscow",
             kwargs={"app": app}
