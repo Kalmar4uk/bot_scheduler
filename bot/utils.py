@@ -10,13 +10,11 @@ class Store:
             date: datetime | None = None,
             description: str | None = None,
             id: int | None = None,
-            message_id: int | None = None
     ):
         self.id = id
         self.sap_id = sap_id
         self.date = date
         self.description = description
-        self.message_id = message_id
 
     @classmethod
     def convertation_from_db(cls, data: dict):
@@ -25,7 +23,6 @@ class Store:
             sap_id=data.get("sap_id"),
             date=data.get("date_event"),
             description=data.get("description"),
-            message_id=data.get("message_id", None)
         )
 
     def save_sap(self, sap: str):

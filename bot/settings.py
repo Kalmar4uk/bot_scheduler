@@ -5,16 +5,17 @@ import sentry_sdk
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from dotenv import load_dotenv
-from telegram.ext import (ApplicationBuilder, CallbackQueryHandler, CommandHandler, MessageHandler,
-                          filters)
+from telegram.ext import ApplicationBuilder, CallbackQueryHandler
 
 from bot.bot_handlers.handlers import (handlers_added_store,
                                        handlers_change_date_event,
                                        handlers_change_event, start_handler)
 from bot.constants import TOKEN
 from bot.exceptions import ErrorStartSchedule
-from bot.scheduler_handlers import (search_messages_without_response,
-                                    search_suitable_stores, reminders_button)
+from bot.scheduler.messages import confirm_button
+from bot.scheduler.new_stores_scheduler import search_suitable_stores
+from bot.scheduler.reminders_stores_scheduler import \
+    search_messages_without_response
 from bot.settings_logs import logger
 from database.update import messages_to_expired
 
@@ -33,14 +34,14 @@ async def setup_scheduler() -> AsyncIOScheduler:
         scheduler = AsyncIOScheduler()
         scheduler.add_job(
             search_suitable_stores,
-            CronTrigger(hour=20, minute=50, second=20),
+            CronTrigger(hour=11, minute=26, second=50),
             id="daily_check",
             timezone="Europe/Moscow",
             kwargs={"app": app}
         )
         scheduler.add_job(
             search_messages_without_response,
-            CronTrigger(hour=9, minute=20),
+            CronTrigger(hour=12, minute=50, second=30),
             id="repeat_check",
             timezone="Europe/Moscow",
             kwargs={"app": app}
@@ -68,7 +69,7 @@ async def setup() -> None:
     await handlers_added_store(app=app)
     await handlers_change_event(app=app)
     await handlers_change_date_event(app=app)
-    app.add_handler(CallbackQueryHandler(reminders_button))
+    app.add_handler(CallbackQueryHandler(confirm_button))
 
     try:
         await app.run_polling()

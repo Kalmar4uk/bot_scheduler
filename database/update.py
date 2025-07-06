@@ -6,13 +6,14 @@ from bot.constants import STATUSES_FOR_REMINDERS
 from bot.exceptions import (ProblemToGetUpdateDataWithDB, ReplyIsEmpty,
                             StoreNotFound)
 from bot.settings_logs import logger
+from bot.utils import Store
 from database.connect import connect_to_db
 
 load_dotenv()
 
 
 async def update_store_received_confirmation(
-        store: list | str
+        store: list[str] | str
 ):
     """Обновление магазинов по которым получили подтверждение"""
     conn = await connect_to_db()
@@ -55,18 +56,25 @@ async def update_store_received_confirmation(
         await conn.close()
 
 
-async def update_reminders_for_repeat(message_ids: list[int]):
+async def update_reminders_for_repeat(stores: list[Store]):
     """Обновление статуса повторного напоминания"""
     conn = await connect_to_db()
+    stores_id = [store.id for store in stores]
     try:
         async with conn.transaction():
             await conn.execute(
                 """
                 UPDATE reminders
                 SET status = $1, last_notified_data = $2
-                WHERE message_id = ANY($3)
+                WHERE store_id = ANY($3)
+                AND status not in ($4, $5)
+                AND created_at < $2
                 """,
-                STATUSES_FOR_REMINDERS["rp"], datetime.now(), (message_ids,)
+                STATUSES_FOR_REMINDERS["rp"],
+                datetime.now(),
+                (stores_id,),
+                STATUSES_FOR_REMINDERS["cn"],
+                STATUSES_FOR_REMINDERS["ex"]
             )
     except Exception as e:
         logger.error(f"Возникла ошибка при обновлении магазинов: {e}")

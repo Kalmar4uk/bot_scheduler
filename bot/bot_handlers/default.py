@@ -5,6 +5,7 @@ from bot.constants import SAP
 from bot.exceptions import ErrorSendMessage
 from bot.settings_logs import logger
 from bot.utils import Store
+from bot.scheduler.reminders_stores_scheduler import search_messages_without_response
 
 
 async def base_func_request_sat(
@@ -53,7 +54,6 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Описание команд"""
     reply_keyboard = [["/add_store"], ["/change_date"], ["/change_event"]]
-
     output = (
         f"Привет {update.message.from_user.username}.\n"
         f"Выбери необходимое действие:\n"

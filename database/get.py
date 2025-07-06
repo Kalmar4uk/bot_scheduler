@@ -41,11 +41,9 @@ async def get_reminders_for_repeat():
             values = await conn.fetch(
                 """
                 SELECT
-                s.id,
                 s.sap_id,
                 s.date_event,
-                s.description,
-                r.message_id
+                s.description
                 FROM stores s
                 JOIN reminders r ON r.store_id = s.id
                 WHERE r.status not in ($1, $2) and r.created_at < $3

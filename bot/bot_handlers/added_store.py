@@ -6,11 +6,10 @@ from telegram.ext import CallbackContext, ContextTypes, ConversationHandler
 from telegram_bot_calendar import DetailedTelegramCalendar
 
 from bot.constants import DESCRIPTION
-from bot.exceptions import ProblemToSaveInDB
+from bot.exceptions import ErrorSendMessage, ProblemToSaveInDB
 from bot.settings_logs import logger
 from bot.utils import Store
 from database.create import create_to_db
-from bot.exceptions import ErrorSendMessage
 
 
 async def sap_id_for_added_store(update: Update, context: CallbackContext):
